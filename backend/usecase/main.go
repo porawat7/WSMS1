@@ -1,44 +1,22 @@
-package main
+package usecase
 
 import (
-	"database/sql"
-	"log"
-	"net/http"
-
-	"workspaces/oop102/backend/repository"
-	"workspaces/oop102/coffee-shop/usecase"
-	"workspaces/oop102/backend/delivery/http"
-
-	_ "github.com/mattn/go-sqlite3"
+	"workspaces/WSMS-final/domain"
 )
 
-func main() {
-	// เปิด SQLite connection
-	db, err := sql.Open("sqlite3", "coffee_shop.db")
-	if err != nil {
-		log.Fatal("เปิด SQLite ไม่ได้:", err)
-	}
-	defer db.Close()
+type courseUsecase struct {
+	repo domain.CourseRepository
+}
 
-	// สร้าง repositories
-	coffeeRepo := repository.NewSQLiteCoffeeRepo(db)
-	orderRepo := repository.NewSQLiteOrderRepo(db)
+// NewCourseUsecase creates a new instance of courseUsecase.
+func NewCourseUsecase(repo domain.CourseRepository) domain.CourseUsecase {
+	return &courseUsecase{repo: repo}
+}
 
-	// inject repositories เข้า usecase
-	orderUC := usecase.NewOrderUseCase(coffeeRepo, orderRepo)
-	// สมมติว่ามี usecase สำหรับ summary
-	// summaryUC := usecase.NewSummaryUseCase(orderRepo)
+func (u *courseUsecase) FetchAllCourses() ([]domain.Course, error) {
+	return u.repo.GetAllCourses()
+}
 
-	// inject usecase เข้า HTTP handler
-	coffeeHandler := http.NewCoffeeHandler(orderUC)
-	orderHandler := http.NewOrderHandler(orderUC)
-	// summaryHandler := http.NewSummaryHandler(summaryUC)
-
-	// wiring routes
-	http.Handle("/coffees", coffeeHandler)
-	http.Handle("/orders", orderHandler)
-	// http.Handle("/summary", summaryHandler)
-
-	log.Println("Server started at :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+func (u *courseUsecase) FetchCourseDetails(id int) (domain.Course, error) {
+	return u.repo.GetCourseByID(id)
 }
